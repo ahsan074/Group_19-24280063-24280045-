@@ -1,0 +1,55 @@
+PROMPT_1 - prompt = f"""
+You are a data cleaning assistant. Clean and standardize the following record.
+
+Perform the following tasks:
+- Fill missing fields like 'city' or 'borough' when possible using other available data like ZIP or coordinates.
+- Fix spelling issues and apply consistent capitalization across all text fields.
+- Standardize all addresses into the format: "Street, Borough, NY".
+- Format all date/time fields (e.g., created_date, closed_date, due_date) to ISO 8601 format.
+- Add a new column called 'complaint_category' and categorize complaint descriptions into general labels like "Noise", "Non-Noise", etc.
+- Remove newline characters, extra whitespace, and trailing commas from all fields.
+- Convert location fields to float and store as a tuple: (latitude, longitude).
+- Ensure 'status' is consistently formatted (e.g., "In Progress", "Closed", etc.)
+- Normalize borough names (e.g., always use "Manhattan" instead of "NEW YORK")
+- Remove duplicate or unnecessary fields like 'location' if latitude/longitude are already present.
+- Make sure all field names in the dictionary are lowercase and use underscores instead of spaces.
+- If 'intersection_street_1' and 'intersection_street_2' are present, use them to infer 'street_name' if it's missing.
+- Ensure zip codes are 5-digit strings (e.g., pad with zero if needed).
+- Add a field `is_closed` as a boolean to indicate whether the complaint has been resolved (based on 'closed_date').
+
+Return the cleaned record as a Python dictionary.
+
+Record:
+{record.to_dict()}
+"""
+USING: chat_completion = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0
+    )
+
+
+PROMPT_2 - prompt = f"""
+    You are a Python testing assistant. Given the cleaned NYC 311 data record below:
+
+    {json.dumps(record, indent=2)}
+
+    Write Python unit tests using `assert` statements to validate and perform these checks:
+    - 'city' and 'borough' fields must not be empty.
+    - All date/time fields should be in ISO 8601 format (e.g., YYYY-MM-DDTHH:MM:SS).
+    - 'incident_address' must follow the format: "Street, Borough, NY".
+    - 'complaint_category' must be one of: ["Noise", "Non-Noise", "Illegal Parking", "Other"].
+    - Capitalization should be consistent (e.g., 'complaint_type', 'descriptor', 'agency_name' should be title case).
+    - No fields should contain newline characters or trailing whitespace.
+
+    Return only valid Python code. Do not include any explanation or markdown.
+
+    Record:
+    {record}
+    """
+
+USING: chat_completion = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0
+    )
